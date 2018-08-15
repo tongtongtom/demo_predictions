@@ -25,10 +25,12 @@ shinyUI(fluidPage(
                                  "average saving increased/decreased, total saving increased/decreased" ='ContrastE',
                                   "average member contribution decreases"='ContrastF')),
       conditionalPanel(condition="input.Contrast.match('Contrast')",
-        sliderInput('variable1', 'VariableSlider1', min=0 , max=1, value=0.1, step=0.01)),
+        sliderInput('variable1', 'VariableSlider1', min=-2 , max=2, value=0.1, step=0.01)),
       conditionalPanel(condition="input.Contrast != 'ContrastF'",
-        sliderInput('variable2', 'VariableSlider2', min=0 , max=1, value=0.1, step=0.01)),
-      conditionalPanel(condition="input.overlays == 1",
+        sliderInput('variable2', 'VariableSlider2', min=-2 , max=2, value=0.1, step=0.01)),
+      selectInput(inputId = "Characteristics", multiple=TRUE, label="Characteristics:",
+                  choices = list()),
+      conditionalPanel(condition="input.overlays == 1|2",
         selectInput(inputId = "detailsWebsite", multiple = FALSE, label ="Details Website", choices = list())
       )
     ),
@@ -38,9 +40,10 @@ shinyUI(fluidPage(
                   tabPanel('One Site:',
                            DT::dataTableOutput('summaryTable'),
                            plotOutput('Contrasts1'),
-                           value = 1)
-                  
-                  #tabPanel(''))
+                           value = 1),
+                  tabPanel('Slopes:',
+                           DT::dataTableOutput('selectedDatasets'),
+                           value = 2)
     )
   )
   )
