@@ -5,7 +5,9 @@ source("ContrastA.R")
 source("ContrastB.R")
 source("ContrastC.R")
 source("ContrastD.R")
+source("ContrastE.R")
 source("helper_functions.R")
+
 
 #source("CountrastB.R")
 #
@@ -102,6 +104,7 @@ shinyServer(function(input, output,session) {
                    filtered = getFiltered(Operator,  RawData)
                    updateSelectInput(session, 'detailsWebsite', choices = Websites, selected=
                                        Websites[1])
+                   print(head(filtered))
                    observeEvent(c(input$detailsWebsite,input$Characteristics),
                                 {
                                   BasicDataSet = filtered[ filtered$SystemCode ==  input$detailsWebsite,]
