@@ -1,7 +1,13 @@
 library(shiny)
 library(plotrix)
+source("Contrasts.R")
+source("ContrastA.R")
+source("ContrastB.R")
+source("ContrastC.R")
+source("ContrastD.R")
 source("helper_functions.R")
 
+#source("CountrastB.R")
 #
 # This is the server logic of a Shiny web application. You can run the 
 # application by clicking 'Run App' above.
@@ -11,11 +17,21 @@ source("helper_functions.R")
 #    http://shiny.rstudio.com/
 #
 
-Performance3MData = read.table("3months_performance",sep=';', header=TRUE)
-RawData = read.table("raw_data", sep=';', header=TRUE)
 
+d7normreg = read.table( file = "../data/reg7dset" ,sep=';')
+d7normdays = read.table( file = "../data/days7dset" ,sep=';')
+d7standreg = read.table(file = "../data/reg7stand" ,sep=';')
+d7standdays = read.table(file = "../data/days7stand" ,sep=';')
 
+d30normreg = read.table( file = "../data/reg30dset" ,sep=';')
+d30normdays = read.table( file = "../data/days30dset" ,sep=';')
+d30standreg = read.table(file = "../data/reg30stand" ,sep=';')
+d30standdays = read.table(file = "../data/days30stand" ,sep=';')
 
+d90normreg = read.table( file = "../data/reg90dset" ,sep=';')
+d90normdays = read.table( file = "../data/days90dset" ,sep=';')
+d90standreg = read.table(file = "../data/reg90stand" ,sep=';')
+d90standdays = read.table(file = "../data/days90stand" ,sep=';')
 
 ###Identifying Problem Websites: step 1 manual, rulebase identification 3 months
 
@@ -25,73 +41,102 @@ RawData = read.table("raw_data", sep=';', header=TRUE)
 #ordered_ruleset1 = ruleset1[order(ruleset1$impactfactor),]
 #subselection = rownames( ordered_ruleset1[ ordered_ruleset1$impactfactor < -0.01,] )
 #subset = Data[ Data$SystemCode %in% subselection,]
-
-
+RawData = d90normdays
+relevant_dataset = d90normreg
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output,session) {
-  observeEvent(input$Contrast,{
-    pars = getParameterNames(input$Contrast)
+  
+  datasets = reactiveValues()
+  
+  observeEvent(input$Dataset,{
+    if( input$Dataset == '7days normalized')
+    { 
+      relevant_dataset <<- d7standreg 
+      RawData <<- d7standdays
+    } else if ( input$Dataset == '7 days')
+    {
+      relevant_dataset <<- d7normreg 
+      RawData <<- d7normdays
+    } else if( input$Dataset == '30 days normalized')
+    {
+      relevant_dataset <<- d30standreg 
+      RawData <<- d30standdays
+    } else if (input$Dataset == '30 days')
+    {
+      relevant_dataset <<- d30normreg 
+      RawData <<- d30normdays
+    } else if( input$Dataset == '90 days normalized')
+    {
+      relevant_dataset <<- d90standreg 
+      RawData <<- d90standdays
+    } else if (input$Dataset == '90 days')
+    {
+      relevant_dataset <<- d90normreg 
+      RawData <<- d90normdays
+    }
+    datasets$relevant_dataset = relevant_dataset
+    datasets$RawData          = RawData
+  })
+  
+  observeEvent(c(input$Contrast,datasets),{
+    Operator = new(input$Contrast)
+    pars = getParameterName(Operator)
+    basis = getSelectedCharacteristics(Operator)
+    ##Can be moved into the class
     updateSliderInput(session,'variable1', label = pars[1])
     updateSliderInput(session,'variable2', label = pars[2])
     
-    
     observeEvent(RawData,{                   
-      updateSelectInput(session, 'Characteristics', choices = colnames(RawData))
+      updateSelectInput(session, 'Characteristics', choices = colnames(RawData), selected = basis)
     }
     )
     
-    observeEvent(c(input$variable1,input$variable2),
+    observeEvent(c(input$variable1,input$variable2, datasets),
                  {
-                   selected = Performance3MData[0,]
-                   selected$impervious = c()
-                   if (input$Contrast == 'ContrastA')
-                   {
-                     selected = subset(Performance3MData,CommissionableSums > input$variable1 & balance < -input$variable2)
-                     selected$impervious = selected$CommissionableSums * selected$balance
-                   }
-                   else 
-                   {
-                     return()
-                   }
-                   selected = selected[ order(selected$impervious), ]
-                   websites = rownames(selected)
-                   selectiondataset = RawData[RawData$SystemCode %in% websites,]
-                   selectionglobalset = 
-                   selectiondataset = selectiondataset[order(selectiondataset$SystemCode,selectiondataset$DATE),]
-                   updateSelectInput(session, 'detailsWebsite', choices = websites)
+                   relevant_dataset =  datasets$relevant_dataset
+                   RawData =  datasets$RawData
+                   Operator = setSelection(Operator, relevant_dataset, input)
+                   selected = getSelection(Operator)
+                   Websites = getSites(Operator)
+                   filtered = getFiltered(Operator,  RawData)
+                   updateSelectInput(session, 'detailsWebsite', choices = Websites, selected=
+                                       Websites[1])
                    observeEvent(c(input$detailsWebsite,input$Characteristics),
                                 {
+                                  BasicDataSet = filtered[ filtered$SystemCode ==  input$detailsWebsite,]
                                   tryCatch({
-                                    backup = selectiondataset[ selectiondataset$SystemCode == input$detailsWebsite,input$Characteristics]
-                                    appel = selectiondataset[ selectiondataset$SystemCode == input$detailsWebsite,]
-                                    selectedsubset = selected[,colnames(selected) %in% input$Characteristics]
+                                    DataSetColumns    = BasicDataSet[,colnames(BasicDataSet) %in% c(input$Characteristics,
+                                                                        'SystemCode','DATE')]
+                                    HighlightedSubset = selected[ ,colnames(selected) %in% c(input$Characteristics,
+                                                                        'SystemCode','DATE')]
                                   }, error = {
-                                    appel = selectiondataset[ selectiondataset$SystemCode == input$detailsWebsite,]
-                                    backup = appel
-                                    selectedsubset = selected
+                                    DataSetColumns   = BasicDataSet
+                                    HighlightedSubset = selected
                                   } )
-                                  output$summaryTable = DT::renderDataTable( backup )
-                                  print(selectedsubset)
-                                  print(intersect(unlist(input$Characteristics),  unlist(colnames(selected) )))
-                                  print( colnames(selected))
-                                  print(input$Characteristics)
-                                  output$selectedDatasets = DT::renderDataTable( selectedsubset )
-                                  if (input$Contrast == 'ContrastA')
-                                  {
-                                    output$Contrasts1 = renderPlot({ 
-                                      twoord.plot(appel$sequence,appel$balance,
-                                                  appel$sequence,appel$WagersCounts, type='l', lcol = 'red', 
-                                                  rcol = 'green', ylab = 'Balance', rylab = 'CommissionableSums',
-                                                  xlab = 'Time', xtickpos = appel$sequence, xticklab = appel$DATE) 
-                                    })
-                                  }
-                                })
+                                  
+                                  tryCatch({
+                                    output$summaryTable = DT::renderDataTable(DataSetColumns)
+                                  }, error = {
+                                    output$summaryTable = NULL
+                                  })
+                                  tryCatch({
+                                    output$selectedDatasets = DT::renderDataTable( HighlightedSubset )
+                                  }, error = {
+                                    output$selectedDatasets = NULL
+                                  })
+                                  tryCatch({
+                                    output$Contrasts1 = Visualize_Essence(Operator, input$detailsWebsite, BasicDataSet)  
+                                  }, error = {
+                                    output$Contrasts1 = NULL
+                                  })
+                                
+
                  })
     
 
     
-
+                 })
   })
-
+  
 })
