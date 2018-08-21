@@ -25,7 +25,7 @@ shinyUI(fluidPage(
       selectInput(inputId = "Dataset", multiple = FALSE, label ='dataset', 
                   choices = list('7days normalized','7 days','30 days normalized','30 days',
                                  '90 days normalized','90 days'),
-                  selected = '90 days'),
+                  selected = '7 days'),
       selectInput(inputId = "Contrast",multiple =FALSE,label = "website:",
                   choices = list("Bets increase, balance decreases" = 'ContrastA', 
                                  "fanshui or reductions increase, stickyness decreases" = 'ContrastB',

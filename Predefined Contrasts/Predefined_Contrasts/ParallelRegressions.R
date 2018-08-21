@@ -76,7 +76,7 @@ ParallelSTDRegression = function(Data2){
       for( param in regressionlist)
       {
         tryCatch({
-          analys_dat[,param]  = analys_dat[,param] / mean(analys_dat[,param])
+          analys_dat[,param]  = analys_dat[,param] / abs(mean(analys_dat[,param]))
           ##devided by 0
           analys_dat[is.na(analys_dat)] = 0.0
           temp_model = eval(parse(text = paste("lm(", param, "~ sequence, data= analys_dat)",sep='')))

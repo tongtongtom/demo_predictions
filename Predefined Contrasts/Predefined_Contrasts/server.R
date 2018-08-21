@@ -43,8 +43,8 @@ d90standdays = read.table(file = "../data/days90stand" ,sep=';')
 #ordered_ruleset1 = ruleset1[order(ruleset1$impactfactor),]
 #subselection = rownames( ordered_ruleset1[ ordered_ruleset1$impactfactor < -0.01,] )
 #subset = Data[ Data$SystemCode %in% subselection,]
-RawData = d90normdays
-relevant_dataset = d90normreg
+RawData = d7normdays
+relevant_dataset = d7normreg
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output,session) {
