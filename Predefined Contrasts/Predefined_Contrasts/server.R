@@ -20,20 +20,20 @@ source("helper_functions.R")
 #
 
 
-d7normreg = read.table( file = "../data/reg7dset" ,sep=';')
-d7normdays = read.table( file = "../data/days7dset" ,sep=';')
-d7standreg = read.table(file = "../data/reg7stand" ,sep=';')
-d7standdays = read.table(file = "../data/days7stand" ,sep=';')
+d7normreg = read.table( file = "../data/reg7dset" ,sep=';', stringsAsFactors = FALSE)
+d7normdays = read.table( file = "../data/days7dset" ,sep=';',stringsAsFactors = FALSE)
+d7standreg = read.table(file = "../data/reg7stand" ,sep=';', stringsAsFactors = FALSE)
+d7standdays = read.table(file = "../data/days7stand" ,sep=';', stringsAsFactors = FALSE)
 
-d30normreg = read.table( file = "../data/reg30dset" ,sep=';')
-d30normdays = read.table( file = "../data/days30dset" ,sep=';')
-d30standreg = read.table(file = "../data/reg30stand" ,sep=';')
-d30standdays = read.table(file = "../data/days30stand" ,sep=';')
+d30normreg = read.table( file = "../data/reg30dset" ,sep=';',stringsAsFactors = FALSE)
+d30normdays = read.table( file = "../data/days30dset" ,sep=';',stringsAsFactors = FALSE)
+d30standreg = read.table(file = "../data/reg30stand" ,sep=';',stringsAsFactors = FALSE)
+d30standdays = read.table(file = "../data/days30stand" ,sep=';',stringsAsFactors = FALSE)
 
-d90normreg = read.table( file = "../data/reg90dset" ,sep=';')
-d90normdays = read.table( file = "../data/days90dset" ,sep=';')
-d90standreg = read.table(file = "../data/reg90stand" ,sep=';')
-d90standdays = read.table(file = "../data/days90stand" ,sep=';')
+d90normreg = read.table( file = "../data/reg90dset" ,sep=';',stringsAsFactors = FALSE)
+d90normdays = read.table( file = "../data/days90dset" ,sep=';',stringsAsFactors = FALSE)
+d90standreg = read.table(file = "../data/reg90stand" ,sep=';',stringsAsFactors = FALSE)
+d90standdays = read.table(file = "../data/days90stand" ,sep=';',stringsAsFactors = FALSE)
 
 ###Identifying Problem Websites: step 1 manual, rulebase identification 3 months
 
@@ -100,10 +100,12 @@ shinyServer(function(input, output,session) {
                    RawData =  datasets$RawData
                    Operator = setSelection(Operator, relevant_dataset, input)
                    selected = getSelection(Operator)
+                   selected = selected[order(selected$impervious,decreasing=T),]
                    Websites = getSites(Operator)
                    filtered = getFiltered(Operator,  RawData)
-                   updateSelectInput(session, 'detailsWebsite', choices = Websites, selected=
-                                       Websites[1])
+
+                  updateSelectInput(session, 'detailsWebsite', choices = Websites, selected=
+                                       selected$SystemCode[1])
                    observeEvent(c(input$detailsWebsite,input$Characteristics),
                                 {
                                   BasicDataSet = filtered[ filtered$SystemCode ==  input$detailsWebsite,]
@@ -111,7 +113,7 @@ shinyServer(function(input, output,session) {
                                     DataSetColumns    = BasicDataSet[,colnames(BasicDataSet) %in% c(input$Characteristics,
                                                                         'SystemCode','DATE')]
                                     HighlightedSubset = selected[ ,colnames(selected) %in% c(input$Characteristics,
-                                                                        'SystemCode','DATE')]
+                                                                        'SystemCode','DATE','impervious')]
                                   }, error = {
                                     DataSetColumns   = BasicDataSet
                                     HighlightedSubset = selected

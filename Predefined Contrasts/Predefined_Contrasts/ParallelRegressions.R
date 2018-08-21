@@ -40,6 +40,7 @@ ParallelRegression = function(Data2){
       }
     }
   }
+  fillzero$SystemCode = rownames(fillzero)
   return(fillzero)
 }
 
@@ -68,6 +69,7 @@ ParallelSTDRegression = function(Data2){
   colnames(fillzero) = regressionlist
   rownames(fillzero) = unique(Data2$SystemCode)
   
+  
   for (k in unique(Data2$SystemCode))
   {
     analys_dat = Data2[Data2$SystemCode == k,]
@@ -88,5 +90,6 @@ ParallelSTDRegression = function(Data2){
       }
     }
   }
+  fillzero$SystemCode = rownames(fillzero)
   return(fillzero)
 }

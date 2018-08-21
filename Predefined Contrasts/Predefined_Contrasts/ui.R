@@ -49,9 +49,11 @@ shinyUI(fluidPage(
                   tabPanel('One Site:',
                            DT::dataTableOutput('summaryTable'),
                            plotOutput('Contrasts1'),
-                           value = 1),
-                  tabPanel('Slopes:',
                            DT::dataTableOutput('selectedDatasets'),
+                           value = 1),
+                  
+                  tabPanel('Slopes:',
+                           plotOutput("Empty"),
                            value = 2)
     )
   )
