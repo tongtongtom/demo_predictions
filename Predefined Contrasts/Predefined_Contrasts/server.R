@@ -8,6 +8,7 @@ source("ContrastD.R")
 source("ContrastE.R")
 source("helper_functions.R")
 
+Operator = NULL
 
 #source("CountrastB.R")
 #
@@ -81,8 +82,22 @@ shinyServer(function(input, output,session) {
     datasets$RawData          = RawData
   })
   
+  observeEvent(c(input$CompareVariable1,input$CompareVariable2),
+  {
+    if (is(Operator,'Contrasts'))
+    {  
+    Operator <<- SetParameters(Operator, c(input$CompareVariable1,input$CompareVariable2))
+    updateSliderInput(session,'variable1', label = input$CompareVariable1)
+    updateSliderInput(session,'variable2', label = input$CompareVariable2)
+    updateSelectInput(session, 'Characteristics', choices = colnames(RawData), 
+                      selected = c(input$CompareVariable1,input$CompareVariable2))
+    }
+ })
+  
   observeEvent(c(input$Contrast,datasets),{
-    Operator = new(input$Contrast)
+    Operator <<- new(input$Contrast)
+    updateSelectInput(session,'CompareVariable1', choices = colnames(getSelection(Operator)))
+    updateSelectInput(session,'CompareVariable2', choices = c('None', colnames(getSelection(Operator))))    
     pars = getParameterName(Operator)
     basis = getSelectedCharacteristics(Operator)
     ##Can be moved into the class
@@ -98,9 +113,12 @@ shinyServer(function(input, output,session) {
                  {
                    relevant_dataset =  datasets$relevant_dataset
                    RawData =  datasets$RawData
+                   pars = getParameterName(Operator)
+                   basis = getSelectedCharacteristics(Operator)
+
                    Operator = setSelection(Operator, relevant_dataset, input)
                    selected = getSelection(Operator)
-                   selected = selected[order(selected$impervious,decreasing=T),]
+                   tryCatch({ selected = selected[order(selected$impervious,decreasing=T),]},except={})
                    Websites = getSites(Operator)
                    filtered = getFiltered(Operator,  RawData)
 

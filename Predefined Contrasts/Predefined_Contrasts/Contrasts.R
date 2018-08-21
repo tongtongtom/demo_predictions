@@ -17,6 +17,7 @@ setGeneric("getSelection", function(tObject){return("data.frame")})
 setGeneric("getFiltered", function(.Object, input){return('data.frame')})
 setGeneric("getSites", function(.Object){return('character')})
 setGeneric("Visualize_Essence", function(.Object, filter, lens){return('plot')})
+setGeneric("SetParameters", function(.Object, param1){return('Contrasts')})
 
 setMethod("initialize",'Contrasts', function(.Object)
 {
@@ -37,7 +38,11 @@ setMethod("initialize",'Contrasts', function(.Object)
                      ,"ThirdPartyPaymentBet","ThirdPartyPaymentPTime",
                      "ThirdPartyPaymentSums","ThirdPartyPaymentTimes","ThirdPartyPaymentUser",
                      "WagersCounts","WithdrawAmount","WithdrawBet","WithdrawSums","WithdrawTimes",
-                     "WithdrawUser")
+                     "WithdrawUser","impervious")
+  .Object@Selected <- as.data.frame(setNames(replicate(length(.Object@Header),
+                                                       0, simplify = F), 
+                                             .Object@Header))
+  .Object@Websites <- c('')
   return(.Object)
 }
 )
@@ -64,10 +69,14 @@ setMethod('setSelection','Contrasts', function(tObject, dataset, input)
   conditionFive  = prod(tObject@Header %in% colnames(dataset))
   if (( conditionOne * conditionTwo * conditionThree * conditionFour * conditionFive) < 1)
   {
-    return(nodata <- as.data.frame(setNames(replicate(length(tObject@Header),
-                                                      numeric(0), simplify = F), 
-                                            tObject@Header)))
-  } else {
+    return(tObject)
+  } else if (input$Contrast == 'ContrastZZ')
+  {
+    print("ContrastZZ")
+    print (input$CompareVariable1)
+    print (input$CompareVariable2)
+    return(tObject)
+  }else {
     print("Everything went fine")
   }
   
@@ -93,3 +102,11 @@ setMethod("getFiltered",'Contrasts', function(.Object, input)
   processed_input = processed_input[ order(processed_input$SystemCode, processed_input$sequence), ]
   return( processed_input )
 })
+
+setGeneric("SetParameters", function(.Object, param1, param2){return('Contrasts')})
+setMethod("SetParameters",'Contrasts', function(.Object,param1)
+  {
+   .Object@ParameterNames = param1
+   .Object@SelectedCharacteristics = param1
+   return(.Object)
+  })

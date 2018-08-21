@@ -1,57 +1,79 @@
 #library(data.table)
 #
-#setClass('ContrastE', contains = 'Contrasts')
-#setMethod("initialize",'ContrastE', function(.Object)
-#{
-#  .Object@ParameterNames =c('DepositTimes','DepositAmount')
-#  .Object@SelectedCharacteristics = c('DepositUser','DepositAmount')
-#  .Object@Header = new('Contrasts')@Header
-#  .Object
-#}
-#)
+setClass('ContrastZZ', contains = 'Contrasts')
+setMethod("initialize",'ContrastE', function(.Object)
+{
+  .Object@ParameterNames =c('Parameter1','Parameter2')
+  .Object@SelectedCharacteristics = c('Parameter1','Parameter2')
+  .Object@Header = new('Contrasts')@Header
+  .Object@Selected = new('Contrasts')@Selected
+  .Object@Websites = ''
+}
+)
 
 
-#setMethod('setSelection','ContrastE', function(tObject, dataset, input)
-#{
-#  callNextMethod(tObject,dataset,input)
-#  print("That was that")
-#  candidate1 = subset(dataset,DepositTimes > input$variable1 & DepositAmount > input$variable2)
-#  candidate1$impervious = candidate1$DepositTimes * candidate1$DepositAmount
-#  candidate1$rn = rownames(candidate1)
-#  candidate2 = subset(dataset,DepositTimes < input$variable1 & DepositAmount < input$variable2)
-#  candidate2$impervious = - candidate2$DepositTimes * candidate2$DepositAmount
-#  candidate2$rn = rownames(candidate2)
-#  tryCatch(
-#    {
-#      selected = rbind( as.data.frame(candidate1), as.data.frame(candidate2))
-#      if (dim(selected)[1] > 1){
-#        selected = aggregate(selected,by=list(selected$rn), min)
-#        tObject@Selected <- selected
-#        tObject@Websites <- selected$rn
-#      } else {
-#        tObject@Selected <- dataset[0,]
-#        tObject@Websites <- c('')
-#      }
-#    }, error = {
-#      tObject@Selected <- dataset[0,]
-#      tObject@Websites <- c('')
-#    })
-#  print("Assigning Names")
-#  return(tObject)
-#})
+setMethod('setSelection','ContrastZZ', function(tObject, dataset, input)
+{
+  callNextMethod(tObject,dataset,input)
 
-#setMethod("Visualize_Essence",'ContrastE', function(.Object, filter, lens){
-#  appel = lens
-#  print("Trying To Produce a Visualization...")
-#  if (dim(appel)[1] < 1 ){ return()}
-#  Contrasts2 = renderPlot({ 
-#    twoord.plot(appel$sequence,appel$DepositTimes,
-#                appel$sequence,appel$DepositAmount, type='l', lcol = 'red', 
-#                rcol = 'green', ylab = 'Deposit Times', rylab = 'Deposit Amounts',
-#                xlab = 'Time') #, xticklab = appel$DATE, xtickpos = appel$sequence
-#    return(Contrasts2)
-#  })
-#})
+  parameter1 = input$CompareVariable1
+  
+  print(input$CompareVariable1)
+  print(input$CompareVariable2)
+  
+  if (input$CompareVariable1 == '') { return(tObject)}
+  candidate1 = data.frame()
+  
+  if (input$CompareVariable2 != 'None')
+  { 
+    parameter2 = input$CompareVariable2
+    candidate1 = dataset[ (dataset[,eval(parameter1)] > input$variable1) & (dataset[,eval(parameter2)] < input$variable2),]
+    if (dim(candidate1)[1] >= 1) {
+        candidate1$impervious = candidate1[,parameter1] * candidate1[,parameter2]
+    } else {
+      return(tObject)
+    }
+  } else {
+    candidate1 = dataset[ (dataset[,eval(parameter1)] > input$variable1),]
+    print("Candidate1:")
+    print(head(candidate1))
+    if (dim(candidate1)[1] >= 1 )
+    {
+    candidate1$impervious = candidate1[,parameter1] 
+    } else {
+      return(tObject)
+    }
+  }
+    tObject@Selected <- candidate1
+    tObject@Websites <- rownames(candidate1)
+    return(tObject)
+})
+
+setMethod("Visualize_Essence",'ContrastZZ', function(.Object, filter, lens){
+  appel = lens
+  print("Trying To Produce a Visualization...")
+  params = .Object@SelectedCharacteristics
+  if (dim(appel)[1] < 1 ){ return()}
+  
+  print(params[1])
+  print(params[2])
+  print(head(appel))
+  print(appel[,'sequence'])
+  
+  if (params[2] != 'None')
+    {
+    Contrasts2 = renderPlot({ 
+      twoord.plot(appel[,'sequence'],appel[,params[1]],appel[,'sequence'],appel[,params[2]],type='l', lcol = 'red', 
+                rcol = 'green', ylab = params[1], rylab = params[2],
+                xlab = 'Time') #, xticklab = appel$DATE, xtickpos = appel$sequence
+    })
+  } else {
+    Contrasts2 = renderPlot({ 
+      plot(appel[,params[1]],appel[,'sequence'], type='l', col = 'red', 
+                  ylab = params[1], xlab = 'Time') 
+    })
+  }
+})
 
 
 #selected = subset(Performance3MData,CommissionableSums > input$variable1 & balance < -input$variable2)
