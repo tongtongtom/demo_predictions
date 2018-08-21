@@ -1,7 +1,7 @@
 setClass('ContrastE', contains = 'Contrasts')
 setMethod("initialize",'ContrastE', function(.Object)
 {
-  .Object@ParameterNames =c('DepositTimes','DepositAmount')
+  .Object@ParameterNames =c('DepositUser','DepositAmount')
   .Object@SelectedCharacteristics = c('DepositUser','DepositAmount')
   .Object@Header = new('Contrasts')@Header
   .Object
@@ -13,11 +13,11 @@ setMethod('setSelection','ContrastE', function(tObject, dataset, input)
 {
   callNextMethod(tObject,dataset,input)
   print("That was that")
-  candidate1 = subset(dataset,DepositTimes > input$variable1 & DepositAmount > input$variable2)
-  candidate1$impervious = candidate1$DepositTimes * candidate1$DepositAmount
+  candidate1 = subset(dataset,DepositUser > input$variable1 & DepositAmount > input$variable1)
+  candidate1$impervious = candidate1$DepositUser * candidate1$DepositAmount
   candidate1$rn = rownames(candidate1)
-  candidate2 = subset(dataset,DepositTimes < input$variable1 & DepositAmount < input$variable2)
-  candidate2$impervious = - candidate2$DepositTimes * candidate2$DepositAmount
+  candidate2 = subset(dataset,DepositUser < input$variable2 & DepositAmount < input$variable2)
+  candidate2$impervious = - candidate2$DepositUser * candidate2$DepositAmount
   candidate2$rn = rownames(candidate2)
   tryCatch(
     {
@@ -43,7 +43,7 @@ setMethod("Visualize_Essence",'ContrastE', function(.Object, filter, lens){
   print("Trying To Produce a Visualization...")
   if (dim(appel)[1] < 1 ){ return()}
   Contrasts2 = renderPlot({ 
-    twoord.plot(appel$sequence,appel$DepositTimes,
+    twoord.plot(appel$sequence,appel$DepositUser,
                 appel$sequence,appel$DepositAmount, type='l', lcol = 'red', 
                 rcol = 'green', ylab = 'Deposit Times', rylab = 'Deposit Amounts',
                 xlab = 'Time') #, xticklab = appel$DATE, xtickpos = appel$sequence

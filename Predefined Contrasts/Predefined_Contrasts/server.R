@@ -104,7 +104,6 @@ shinyServer(function(input, output,session) {
                    filtered = getFiltered(Operator,  RawData)
                    updateSelectInput(session, 'detailsWebsite', choices = Websites, selected=
                                        Websites[1])
-                   print(head(filtered))
                    observeEvent(c(input$detailsWebsite,input$Characteristics),
                                 {
                                   BasicDataSet = filtered[ filtered$SystemCode ==  input$detailsWebsite,]
