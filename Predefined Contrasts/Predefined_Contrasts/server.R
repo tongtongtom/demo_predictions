@@ -1,15 +1,18 @@
 library(shiny)
 library(plotrix)
+library(robustbase)
+
 source("Contrasts.R")
 source("ContrastA.R")
 source("ContrastB.R")
 source("ContrastC.R")
 source("ContrastD.R")
 source("ContrastE.R")
+source("ContrastZZ.R")
 source("helper_functions.R")
 
-Operator = NULL
 
+Operator = NULL
 #source("CountrastB.R")
 #
 # This is the server logic of a Shiny web application. You can run the 
@@ -52,31 +55,37 @@ shinyServer(function(input, output,session) {
   
   datasets = reactiveValues()
   
-  observeEvent(input$Dataset,{
+  observeEvent(c(input$Dataset,input$MinUsers, input$AvgUsers),{
     if( input$Dataset == '7days normalized')
     { 
-      relevant_dataset <<- d7standreg 
-      RawData <<- d7standdays
+      indxs = filtermin(d7standdays, input$MinUsers, input$AvgUsers)
+      relevant_dataset <<- d7standreg[indxs, ] 
+      RawData <<- d7standdays[d7standdays$SystemCode %in% indxs, ]
     } else if ( input$Dataset == '7 days')
     {
-      relevant_dataset <<- d7normreg 
-      RawData <<- d7normdays
+     indxs = filtermin(d7normdays, input$MinUsers, input$AvgUsers)
+      relevant_dataset <<- d7normreg[indxs,] 
+      RawData <<- d7normdays[ d7normdays$SystemCode %in% indxs, ]
     } else if( input$Dataset == '30 days normalized')
     {
-      relevant_dataset <<- d30standreg 
-      RawData <<- d30standdays
+      indxs = filtermin(d30standdays, input$MinUsers, input$AvgUsers)
+      relevant_dataset <<- d30standreg[indxs,] 
+      RawData <<- d30standdays[ d30standdays$SystemCode %in% indxs,]
     } else if (input$Dataset == '30 days')
     {
-      relevant_dataset <<- d30normreg 
-      RawData <<- d30normdays
+      indxs = filtermin(d30normdays, input$MinUsers, input$AvgUsers)
+      relevant_dataset <<- d30normreg[indxs,] 
+      RawData <<- d30normdays[ d30normdays$SystemCode %in% indxs,]
     } else if( input$Dataset == '90 days normalized')
     {
-      relevant_dataset <<- d90standreg 
-      RawData <<- d90standdays
+      indxs = filtermin(d90standdays, input$MinUsers, input$AvgUsers)
+      relevant_dataset <<- d90standreg[indxs,] 
+      RawData <<- d90standdays[ d90standdays$SystemCode %in% indxs,]
     } else if (input$Dataset == '90 days')
     {
-      relevant_dataset <<- d90normreg 
-      RawData <<- d90normdays
+      indxs = filtermin(d90normdays, input$MinUsers, input$AvgUsers)
+      relevant_dataset <<- d90normreg[indxs,] 
+      RawData <<- d90normdays[ d90normdays$SystemCode %in% indxs,]
     }
     datasets$relevant_dataset = relevant_dataset
     datasets$RawData          = RawData
@@ -108,6 +117,83 @@ shinyServer(function(input, output,session) {
       updateSelectInput(session, 'Characteristics', choices = colnames(RawData), selected = basis)
     }
     )
+    
+    
+    filterout = function(ip){
+      return(ip[!(ip %in% c('SystemCode','DATE','sequence')) ])
+    }
+    
+    observeEvent(c(input$Dataset,input$Characteristics, input$topn),
+                  {
+                    if (input$overlays == 2){
+                      filt_chars = filterout(input$Characteristics)
+                      cols_ds = colnames(datasets$relevant_dataset) %in% filt_chars
+                      cols_RD = colnames(datasets$RawData) %in% filt_chars
+                      selected_MT = as.data.frame(datasets$relevant_dataset[,cols_ds])
+                      basis_MT    = as.data.frame(datasets$RawData[,])
+                      tryCatch({
+                      if ((dim(selected_MT)[1] > 1) && (dim(selected_MT)[2] > 1))
+                        {
+                        x = robustbase::covMcd(selected_MT)
+                        top_n_rows = (rownames(selected_MT)[ order(x$mah, decreasing =TRUE) ])[1:input$topn]
+                        output$comparisonList =
+                        renderPlot({
+                          matplot(t(rbind(atan(x$center),atan(selected_MT[top_n_rows,]))),type='l', xlab = 'Category', ylab ='evolution',
+                                axes =F, col = c(1:(input$topn +1)))
+                        legend("bottomright", inset=.05, legend=c('mean', top_n_rows), pch=1, horiz=FALSE,
+                               col = c(1:(input$topn+1)))
+                        axis(2)
+                        axis(side=1, at=1:length(filt_chars), labels = filt_chars, outer= FALSE)
+                        })
+                        output$Comparison = DT::renderDataTable(selected_MT)
+                        
+                        output$DistanceDistance = renderPlot({plot(x,which='dd')})
+                        # Insert the right number of plot output objects into the web page
+                        output$ComparedRawData <- renderUI({
+                          plot_output_list <- lapply(1:length(filt_chars), function(i) {
+                            plotname <- paste("Harbour", i, sep="")
+                            plotOutput(plotname, height = 500, width = 750)
+                          })
+                          
+                          # Convert the list to a tagList - this is necessary for the list of items
+                          # to display properly.
+                          do.call(tagList, plot_output_list)
+                        })
+                        
+                        for (i in 1:length(filt_chars)) {
+                          # Need local so that each item gets its own number. Without it, the value
+                          # of i in the renderPlot() will be the same across all instances, because
+                          # of when the expression is evaluated.
+                          local({
+                            my_i <- i
+                            plotname <- paste("Harbour", my_i, sep="")
+                            rowlov= filt_chars[my_i]
+                            tmporset = subset(basis_MT[,c('sequence','SystemCode',rowlov)], 
+                                                SystemCode %in%  top_n_rows)
+                            datainput = eval(parse(text = paste('xtabs(formula =',eval(rowlov),
+                                            '~sequence + SystemCode, data = tmporset)',sep='')))
+                            output[[plotname]] <- renderPlot({
+                              matplot(datainput,
+                                      main = rowlov, type='l'
+                              )
+                              legend("bottomright", inset=.05, legend=top_n_rows, pch=1, horiz=FALSE,
+                                     col = c(1:length(top_n_rows)))
+                              
+                            })
+                          })
+                        }
+                      } else { 
+                          output$comparisonList   = renderPlot({})
+                          output$Comparison       = DT::renderDataTable(data.frame())
+                          output$DistanceDistance = renderPlot({})
+                          output$ComparedRawData  = renderUI({})
+                        }
+                      }
+                      , except={})
+                      
+                    }
+                  })
+    
     
     observeEvent(c(input$variable1,input$variable2, datasets),
                  {

@@ -26,25 +26,30 @@ shinyUI(fluidPage(
                   choices = list('7days normalized','7 days','30 days normalized','30 days',
                                  '90 days normalized','90 days'),
                   selected = '7 days'),
-      selectInput(inputId = "Contrast",multiple =FALSE,label = "website:",
-                  choices = list("Bets increase, balance decreases" = 'ContrastA', 
-                                 "fanshui or reductions increase, stickyness decreases" = 'ContrastB',
-                                 "Stickyness increasing, fanshui flat or decreasing" = 'ContrastC',
-                                 "Deposit increasing, profit decreasing" = 'ContrastD',
-                                 "average saving increased/decreased, total saving increased/decreased" ='ContrastE',
-                                  "average member contribution decreases"='ContrastF','any vs any (two characteristics)'='ContrastZZ')),
-      conditionalPanel(condition="input.Contrast.match('Contrast')",
+      sliderInput(inputId = 'MinUsers', label = 'Minimum User', min = 0, max = 50000, value  = 50, step = 1),
+      sliderInput(inputId = 'AvgUsers', label = 'Average User', min = 0, max = 50000, value  = 0, step = 1),
+      conditionalPanel(condition="input.Contrast.match('Contrast') && input.overlays==1",
+         selectInput(inputId = "Contrast",multiple =FALSE,label = "website:",
+                choices = list("Bets increase, balance decreases" = 'ContrastA', 
+                               "fanshui or reductions increase, stickyness decreases" = 'ContrastB',
+                               "Stickyness increasing, fanshui flat or decreasing" = 'ContrastC',
+                               "Deposit increasing, profit decreasing" = 'ContrastD',
+                               "average saving increased/decreased, total saving increased/decreased" ='ContrastE',
+                               "average member contribution decreases"='ContrastF','any vs any (two characteristics)'='ContrastZZ')),
+                       
         sliderInput('variable1', 'VariableSlider1', min=-2 , max=2, value=0.1, step=0.01)),
-      conditionalPanel(condition="input.Contrast != 'ContrastF'",
+      conditionalPanel(condition="input.Contrast != 'ContrastF' && input.overlays==1",
         sliderInput('variable2', 'VariableSlider2', min=-2 , max=2, value=0.1, step=0.01)),
       conditionalPanel(condition="input.Contrast == 'ContrastZZ'",
                        selectInput(inputId = 'CompareVariable1', multiple = FALSE, label = 'Compare Variable 1',choices = list()),
                        selectInput(inputId = 'CompareVariable2', multiple = FALSE, label = 'Compare Variable 2',choices = list())),
       selectInput(inputId = "Characteristics", multiple=TRUE, label="Characteristics:",
                   choices = list()),
-      conditionalPanel(condition="input.overlays == 1|2",
+      conditionalPanel(condition="input.overlays == 1",
         selectInput(inputId = "detailsWebsite", multiple = FALSE, label ="Details Website", choices = list())
-      )
+      ),
+      conditionalPanel(condition="input.overlays==2", 
+        sliderInput(inputId = "topn",label='top_n', min=1, max = 10, value=5, step= 1))
     ),
     # Show a plot of the generated distribution
     mainPanel(
@@ -55,8 +60,11 @@ shinyUI(fluidPage(
                            DT::dataTableOutput('selectedDatasets'),
                            value = 1),
                   
-                  tabPanel('Slopes:',
-                           plotOutput("Empty"),
+                  tabPanel('Deviating Distance:',
+                           plotOutput('comparisonList'),
+                           plotOutput("DistanceDistance"),
+                           DT::dataTableOutput('Comparison'),
+                           uiOutput("ComparedRawData"),
                            value = 2)
     )
   )

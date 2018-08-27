@@ -112,4 +112,34 @@ write.table(days90set, file = "D:/source/1_Predictive/Predefined Contrasts/Data/
 write.table(reg90stand, file = "D:/source/1_Predictive/Predefined Contrasts/Data/reg90stand" ,sep=';')
 write.table(days90stand, file = "D:/source/1_Predictive/Predefined Contrasts/Data/days90stand" ,sep=';')
 
+#[1] "AddictiveRate"          "balance"                "BetAmountSums"          "Bite"                  
+#[5] "BitePerBet"             "BitePerUser"            "CDepositBet"            "CDepositPTime"         
+#[9] "CDepositPUser"          "ChurnRate1"             "ChurnRate30"            "ChurnRate7"            
+#[13] "CommissionableBet"      "CommissionableSums"     "CommissionableUser"     "CreditDepositBet"      
+#[17] "CreditDepositPTime"     "CreditDepositSums"      "CreditDepositTimes"     "CreditDepositUser"     
+#[21] "CreditWithdrawBet"      "CreditWithdrawPTime"    "CreditWithdrawSums"     "CreditWithdrawTimes"   
+#[25] "CreditWithdrawUser"     "DepositAmount"          "DepositBet"             "DepositSums"           
+#[29] "DepositTimes"           "DepositUser"            "DiscountBets"           "DiscountSums"          
+#[33] "DiscountUser"           "FavorableBet"           "FavorableSums"          "FavorableUser"         
+#[37] "FirstDepositAmount"     "FirstDepositBet"        "FirstDepositNumber"     "FirstDepositpTime"     
+#[41] "FirstDepositUser"       "MemberCounts"           "MemberDiscountBet"      "MemberDiscountSums"    
+#[45] "MemberDiscountUser"     "OthersBet"              "OthersSums"             "OthersUser"            
+#[49] "OWithdrawBet"           "OWithdrawPTime"         "OWithdrawUser"          "PayoffBet"             
+#[53] "PayoffSums"             "PayoffUser"             "RetentionRate1"         "RetentionRate30"       
+#[57] "RetentionRate7"         "ThirdPartyPaymentBet"   "ThirdPartyPaymentPTime" "ThirdPartyPaymentSums" 
+#[61] "ThirdPartyPaymentTimes" "ThirdPartyPaymentUser"  "WagersCounts"           "WithdrawAmount"        
+#[65] "WithdrawBet"            "WithdrawSums"           "WithdrawTimes"          "WithdrawUser"          
+#[69] "SystemCode"            
+
+dmm = CovMcd(reg7set[,c("AddictiveRate","balance","BetAmountSums","Bite",
+                        "BitePerBet","BitePerUser", "CDepositBet" , "CDepositPTime",
+                        "CommissionableBet","CommissionableSums", "CommissionableUser", "CreditDepositBet"   
+                        )])
+plot(dmm)
+
+dmm = CovMcd(reg30set[,c("AddictiveRate","balance","BetAmountSums","Bite",
+                        "BitePerBet","BitePerUser", "CDepositBet" , "CDepositPTime",
+                        "CommissionableBet","CommissionableSums", "CommissionableUser", "CreditDepositBet"   
+)])
+
 
