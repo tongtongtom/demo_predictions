@@ -8,6 +8,8 @@
 #
 
 library(shiny)
+library(shinyRGL)
+
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
@@ -65,7 +67,13 @@ shinyUI(fluidPage(
                            plotOutput("DistanceDistance"),
                            DT::dataTableOutput('Comparison'),
                            uiOutput("ComparedRawData"),
-                           value = 2)
+                           value = 2),
+                  
+                  tabPanel("Robust PCA perspective:",
+                           rglwidgetOutput ('PCA_plot'),
+                           rglwidgetOutput ("myWebGL"),
+                           DT::dataTableOutput('PCA_summary'),
+                           value = 3)
     )
   )
   )

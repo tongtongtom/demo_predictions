@@ -1,6 +1,8 @@
 library(shiny)
 library(plotrix)
 library(robustbase)
+library(shinyRGL)
+library(rgl)
 
 source("Contrasts.R")
 source("ContrastA.R")
@@ -89,6 +91,8 @@ shinyServer(function(input, output,session) {
     }
     datasets$relevant_dataset = relevant_dataset
     datasets$RawData          = RawData
+    
+
   })
   
   observeEvent(c(input$CompareVariable1,input$CompareVariable2),
@@ -122,6 +126,53 @@ shinyServer(function(input, output,session) {
     filterout = function(ip){
       return(ip[!(ip %in% c('SystemCode','DATE','sequence')) ])
     }
+    
+    
+    observeEvent(c(datasets,input$Characteristics),{
+      ###Create 3D PCA representation
+      if (input$overlays ==3)
+      {
+          print("OK, tot hier")
+          filt_chars = filterout(input$Characteristics)
+          cols_ds = colnames(datasets$relevant_dataset) %in% filt_chars
+          cols_RD = colnames(datasets$RawData) %in% filt_chars
+          tempdata = datasets$relevant_dataset
+          if (dim(tempdata)[2] > 2)
+          {
+          filtered =tempdata[,cols_ds]
+          
+          tryCatch({
+          if ((sum(cols_ds) > 2)){
+          model1 =PcaHubert(x = tempdata[,cols_ds], k= 50)
+          md1 = getScores(model1)[,c(1:3)]
+          Mean = getCenter(CovMve(md1))
+          Sigma = getCov(CovMve(md1))
+          
+          #output$myWebGL = renderRglwidget({
+          #  n <- 10
+          #  try(rgl.close())
+          #  plot3d(rnorm(n), rnorm(n), rnorm(n))
+          #  rglwidget()
+          #})
+          
+          output$PCA_plot = renderRglwidget({
+            try(rgl.close())
+            plot3d(ellipse3d(Sigma,centre=Mean,level=0.99999), col = "blue", alpha = 0.5, aspect = TRUE,shape='points')
+            points3d(md1, col='red', shape='points')
+            rglwidget()
+          })
+          
+          
+          ###Now the more difficult part:
+          
+          }
+          },except = {
+            
+          })
+          }
+       
+      }
+    })
     
     observeEvent(c(input$Dataset,input$Characteristics, input$topn),
                   {
