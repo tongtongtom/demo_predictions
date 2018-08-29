@@ -26,20 +26,20 @@ Operator = NULL
 #
 
 
-d7normreg = read.table( file = "../data/reg7dset" ,sep=';', stringsAsFactors = FALSE)
-d7normdays = read.table( file = "../data/days7dset" ,sep=';',stringsAsFactors = FALSE)
-d7standreg = read.table(file = "../data/reg7stand" ,sep=';', stringsAsFactors = FALSE)
-d7standdays = read.table(file = "../data/days7stand" ,sep=';', stringsAsFactors = FALSE)
+d7normreg = read.table( file = "../Data/reg7dset" ,sep=';', stringsAsFactors = FALSE)
+d7normdays = read.table( file = "../Data/days7dset" ,sep=';',stringsAsFactors = FALSE)
+d7standreg = read.table(file = "../Data/reg7stand" ,sep=';', stringsAsFactors = FALSE)
+d7standdays = read.table(file = "../Data/days7stand" ,sep=';', stringsAsFactors = FALSE)
 
-d30normreg = read.table( file = "../data/reg30dset" ,sep=';',stringsAsFactors = FALSE)
-d30normdays = read.table( file = "../data/days30dset" ,sep=';',stringsAsFactors = FALSE)
-d30standreg = read.table(file = "../data/reg30stand" ,sep=';',stringsAsFactors = FALSE)
-d30standdays = read.table(file = "../data/days30stand" ,sep=';',stringsAsFactors = FALSE)
+d30normreg = read.table( file = "../Data/reg30dset" ,sep=';',stringsAsFactors = FALSE)
+d30normdays = read.table( file = "../Data/days30dset" ,sep=';',stringsAsFactors = FALSE)
+d30standreg = read.table(file = "../Data/reg30stand" ,sep=';',stringsAsFactors = FALSE)
+d30standdays = read.table(file = "../Data/days30stand" ,sep=';',stringsAsFactors = FALSE)
 
-d90normreg = read.table( file = "../data/reg90dset" ,sep=';',stringsAsFactors = FALSE)
-d90normdays = read.table( file = "../data/days90dset" ,sep=';',stringsAsFactors = FALSE)
-d90standreg = read.table(file = "../data/reg90stand" ,sep=';',stringsAsFactors = FALSE)
-d90standdays = read.table(file = "../data/days90stand" ,sep=';',stringsAsFactors = FALSE)
+d90normreg = read.table( file = "../Data/reg90dset" ,sep=';',stringsAsFactors = FALSE)
+d90normdays = read.table( file = "../Data/days90dset" ,sep=';',stringsAsFactors = FALSE)
+d90standreg = read.table(file = "../Data/reg90stand" ,sep=';',stringsAsFactors = FALSE)
+d90standdays = read.table(file = "../Data/days90stand" ,sep=';',stringsAsFactors = FALSE)
 
 ###Identifying Problem Websites: step 1 manual, rulebase identification 3 months
 
@@ -50,47 +50,47 @@ d90standdays = read.table(file = "../data/days90stand" ,sep=';',stringsAsFactors
 #subselection = rownames( ordered_ruleset1[ ordered_ruleset1$impactfactor < -0.01,] )
 #subset = Data[ Data$SystemCode %in% subselection,]
 RawData = d7normdays
-relevant_dataset = d7normreg
+relevant_Dataset = d7normreg
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output,session) {
   
-  datasets = reactiveValues()
+  Datasets = reactiveValues()
   
   observeEvent(c(input$Dataset,input$MinUsers, input$AvgUsers),{
     if( input$Dataset == '7days normalized')
     { 
       indxs = filtermin(d7standdays, input$MinUsers, input$AvgUsers)
-      relevant_dataset <<- d7standreg[indxs, ] 
+      relevant_Dataset <<- d7standreg[indxs, ] 
       RawData <<- d7standdays[d7standdays$SystemCode %in% indxs, ]
     } else if ( input$Dataset == '7 days')
     {
      indxs = filtermin(d7normdays, input$MinUsers, input$AvgUsers)
-      relevant_dataset <<- d7normreg[indxs,] 
+      relevant_Dataset <<- d7normreg[indxs,] 
       RawData <<- d7normdays[ d7normdays$SystemCode %in% indxs, ]
     } else if( input$Dataset == '30 days normalized')
     {
       indxs = filtermin(d30standdays, input$MinUsers, input$AvgUsers)
-      relevant_dataset <<- d30standreg[indxs,] 
+      relevant_Dataset <<- d30standreg[indxs,] 
       RawData <<- d30standdays[ d30standdays$SystemCode %in% indxs,]
     } else if (input$Dataset == '30 days')
     {
       indxs = filtermin(d30normdays, input$MinUsers, input$AvgUsers)
-      relevant_dataset <<- d30normreg[indxs,] 
+      relevant_Dataset <<- d30normreg[indxs,] 
       RawData <<- d30normdays[ d30normdays$SystemCode %in% indxs,]
     } else if( input$Dataset == '90 days normalized')
     {
       indxs = filtermin(d90standdays, input$MinUsers, input$AvgUsers)
-      relevant_dataset <<- d90standreg[indxs,] 
+      relevant_Dataset <<- d90standreg[indxs,] 
       RawData <<- d90standdays[ d90standdays$SystemCode %in% indxs,]
     } else if (input$Dataset == '90 days')
     {
       indxs = filtermin(d90normdays, input$MinUsers, input$AvgUsers)
-      relevant_dataset <<- d90normreg[indxs,] 
+      relevant_Dataset <<- d90normreg[indxs,] 
       RawData <<- d90normdays[ d90normdays$SystemCode %in% indxs,]
     }
-    datasets$relevant_dataset = relevant_dataset
-    datasets$RawData          = RawData
+    Datasets$relevant_Dataset = relevant_Dataset
+    Datasets$RawData          = RawData
     
 
   })
@@ -107,7 +107,7 @@ shinyServer(function(input, output,session) {
     }
  })
   
-  observeEvent(c(input$Contrast,datasets),{
+  observeEvent(c(input$Contrast,Datasets),{
     Operator <<- new(input$Contrast)
     updateSelectInput(session,'CompareVariable1', choices = colnames(getSelection(Operator)))
     updateSelectInput(session,'CompareVariable2', choices = c('None', colnames(getSelection(Operator))))    
@@ -128,42 +128,50 @@ shinyServer(function(input, output,session) {
     }
     
     
-    observeEvent(c(datasets,input$Characteristics),{
+    observeEvent(c(Datasets,input$Characteristics),{
       ###Create 3D PCA representation
       if (input$overlays ==3)
       {
           print("OK, tot hier")
           filt_chars = filterout(input$Characteristics)
-          cols_ds = colnames(datasets$relevant_dataset) %in% filt_chars
-          cols_RD = colnames(datasets$RawData) %in% filt_chars
-          tempdata = datasets$relevant_dataset
-          if (dim(tempdata)[2] > 2)
+          cols_ds = colnames(Datasets$relevant_Dataset) %in% filt_chars
+          cols_RD = colnames(Datasets$RawData) %in% c(filt_chars,'sequence','SystemCode')
+          tempData = Datasets$relevant_Dataset
+          filtdata = Datasets$RawData
+          if (dim(tempData)[2] > 2)
           {
-          filtered =tempdata[,cols_ds]
+          filtered =tempData[,cols_ds]
           
           tryCatch({
           if ((sum(cols_ds) > 2)){
-          model1 =PcaHubert(x = tempdata[,cols_ds], k= 50)
+          model1 =PcaHubert(x = tempData[,cols_ds], k= 50)
           md1 = getScores(model1)[,c(1:3)]
           Mean = getCenter(CovMve(md1))
           Sigma = getCov(CovMve(md1))
           
-          #output$myWebGL = renderRglwidget({
-          #  n <- 10
-          #  try(rgl.close())
-          #  plot3d(rnorm(n), rnorm(n), rnorm(n))
-          #  rglwidget()
-          #})
+          stretcher = estimate_probability(input$pcascale)
+          statvalues  = as.data.frame(diag(((md1[,]-Mean) %*% MASS::ginv(Sigma)) %*% t(md1-Mean)))
+          outliers = (rownames(statvalues)[ sqrt(statvalues[,1]) > stretcher])
           
+          relic = filtdata[filtdata$SystemCode %in% outliers,cols_RD]
+          subsetter = colnames(relic) %in% filt_chars
+          
+          create_summary(relic[subsetter], list(relic$SystemCode))
+
+          output$PCA_summary = DT::renderDataTable(filtdata[filtdata$SystemCode %in% outliers,cols_RD])
+          
+          ###Now the more difficult part: isolating the outliers
           output$PCA_plot = renderRglwidget({
             try(rgl.close())
-            plot3d(ellipse3d(Sigma,centre=Mean,level=0.99999), col = "blue", alpha = 0.5, aspect = TRUE,shape='points')
+            plot3d(ellipse3d(Sigma,centre=Mean,scale = c(stretcher,stretcher,stretcher), level = 0.2), col = "blue", alpha = 0.5, aspect = TRUE,shape='points')
+            points3d(md1[rownames(md1) %in% outliers, ],col='black', shape='points')
+           
             points3d(md1, col='red', shape='points')
             rglwidget()
           })
           
           
-          ###Now the more difficult part:
+
           
           }
           },except = {
@@ -178,11 +186,12 @@ shinyServer(function(input, output,session) {
                   {
                     if (input$overlays == 2){
                       filt_chars = filterout(input$Characteristics)
-                      cols_ds = colnames(datasets$relevant_dataset) %in% filt_chars
-                      cols_RD = colnames(datasets$RawData) %in% filt_chars
-                      selected_MT = as.data.frame(datasets$relevant_dataset[,cols_ds])
-                      basis_MT    = as.data.frame(datasets$RawData[,])
+                      cols_ds = colnames(Datasets$relevant_Dataset) %in% filt_chars
+                      cols_RD = colnames(Datasets$RawData) %in% filt_chars
+                      selected_MT = Datasets$relevant_Dataset[,cols_ds]
+                      basis_MT    = Datasets$RawData[,]
                       tryCatch({
+                      if(sum(cols_ds) < 2) { return()}
                       if ((dim(selected_MT)[1] > 1) && (dim(selected_MT)[2] > 1))
                         {
                         x = robustbase::covMcd(selected_MT)
@@ -221,10 +230,10 @@ shinyServer(function(input, output,session) {
                             rowlov= filt_chars[my_i]
                             tmporset = subset(basis_MT[,c('sequence','SystemCode',rowlov)], 
                                                 SystemCode %in%  top_n_rows)
-                            datainput = eval(parse(text = paste('xtabs(formula =',eval(rowlov),
+                            Datainput = eval(parse(text = paste('xtabs(formula =',eval(rowlov),
                                             '~sequence + SystemCode, data = tmporset)',sep='')))
                             output[[plotname]] <- renderPlot({
-                              matplot(datainput,
+                              matplot(Datainput,
                                       main = rowlov, type='l'
                               )
                               legend("bottomright", inset=.05, legend=top_n_rows, pch=1, horiz=FALSE,
@@ -246,14 +255,14 @@ shinyServer(function(input, output,session) {
                   })
     
     
-    observeEvent(c(input$variable1,input$variable2, datasets),
+    observeEvent(c(input$variable1,input$variable2, Datasets),
                  {
-                   relevant_dataset =  datasets$relevant_dataset
-                   RawData =  datasets$RawData
+                   relevant_Dataset =  Datasets$relevant_Dataset
+                   RawData =  Datasets$RawData
                    pars = getParameterName(Operator)
                    basis = getSelectedCharacteristics(Operator)
 
-                   Operator = setSelection(Operator, relevant_dataset, input)
+                   Operator = setSelection(Operator, relevant_Dataset, input)
                    selected = getSelection(Operator)
                    tryCatch({ selected = selected[order(selected$impervious,decreasing=T),]},except={})
                    Websites = getSites(Operator)

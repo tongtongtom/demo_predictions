@@ -9,6 +9,7 @@
 
 library(shiny)
 library(shinyRGL)
+library(rgl)
 
 
 # Define UI for application that draws a histogram
@@ -51,7 +52,10 @@ shinyUI(fluidPage(
         selectInput(inputId = "detailsWebsite", multiple = FALSE, label ="Details Website", choices = list())
       ),
       conditionalPanel(condition="input.overlays==2", 
-        sliderInput(inputId = "topn",label='top_n', min=1, max = 10, value=5, step= 1))
+        sliderInput(inputId = "topn",label='top_n', min=1, max = 10, value=5, step= 1)),
+      conditionalPanel(condition="input.overlays==3", 
+        sliderInput(inputId='pcascale',label='Confidence',min=-150, max = -1, value=-4, step=-1)
+        )
     ),
     # Show a plot of the generated distribution
     mainPanel(
