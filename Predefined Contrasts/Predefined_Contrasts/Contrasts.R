@@ -73,8 +73,6 @@ setMethod('setSelection','Contrasts', function(tObject, dataset, input)
   } else if (input$Contrast == 'ContrastZZ')
   {
     print("ContrastZZ")
-    print (input$CompareVariable1)
-    print (input$CompareVariable2)
     return(tObject)
   }else {
     print("Everything went fine")

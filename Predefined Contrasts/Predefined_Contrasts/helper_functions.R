@@ -21,13 +21,31 @@ create_summary = function(ds, sel)
 {
  summaryset = aggregate(x = ds, 
             by = sel,  
-            FUN = function(x)c(min = min(x),max = max(x),mean = mean(x),median = median(x),sd = sd(x))
+            FUN = function(x)c(min = min(abs(x)),max = max(abs(x)),median = median(x),mean = mean(x),sd = sd(x))
             )
- print(dim(summaryset))
-#print(head(summaryset))
-#print(head(summaryset[,2]))
-#print((6*c(1:sum(subsetter)) - 1)+1)
-#
+ functionlist = c('min','max','median','mean','sd')
+ 
+ referencedf= data.frame()
+ template = c("SystemCode",colnames(ds),'summary')
+ print(template)
+ print("Iterations:")
+ for (k in c(1:length(functionlist)))
+ {
+   first_col = as.data.frame(summaryset[,1])
+   for (l in c(2:(length(unique(colnames(ds)))+1)))
+   {
+     extractpart = summaryset[,l][,k]
+     first_col = cbind(first_col,extractpart)
+   }
+   first_col$summary = functionlist[k]
+   referencedf = rbind(referencedf,first_col)
+ }
+ #print(head(referencedf))
+ #print(template)
+ 
+ colnames(referencedf) = template
+ print("Leaving Helper Function:")
+ return(referencedf)
 }
 
 
@@ -44,10 +62,12 @@ estimate_probability = function(target)
   return(x) ##resultaat is a multiplier on the scale
 }
 
+filterout = function(ip){
+  return(ip[!(ip %in% c('SystemCode','DATE','sequence')) ])
+}
 
 filtermin = function(datam, mincut, avgcut)
 {
-  print(head(datam))
   mindata = aggregate(datam[,c('MemberCounts','WagersCounts')],by=list(datam$SystemCode), min)
   avgdata = aggregate(datam[,c('MemberCounts','WagersCounts')],by=list(datam$SystemCode), mean)
   listone = mindata[ mindata$MemberCounts <= mincut, 'Group.1'] 

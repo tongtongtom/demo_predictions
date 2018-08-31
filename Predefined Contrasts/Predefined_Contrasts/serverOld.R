@@ -3,7 +3,6 @@ library(plotrix)
 library(robustbase)
 library(shinyRGL)
 library(rgl)
-library(rrcov)
 
 source("Contrasts.R")
 source("ContrastA.R")
@@ -13,7 +12,7 @@ source("ContrastD.R")
 source("ContrastE.R")
 source("ContrastZZ.R")
 source("helper_functions.R")
-source("DataInput.R")
+
 
 Operator = NULL
 #source("CountrastB.R")
@@ -27,7 +26,21 @@ Operator = NULL
 #
 
 
-datasets = readindata()
+d7normreg = read.table( file = "../Data/reg7dset" ,sep=';', stringsAsFactors = FALSE)
+d7normdays = read.table( file = "../Data/days7dset" ,sep=';',stringsAsFactors = FALSE)
+d7standreg = read.table(file = "../Data/reg7stand" ,sep=';', stringsAsFactors = FALSE)
+d7standdays = read.table(file = "../Data/days7stand" ,sep=';', stringsAsFactors = FALSE)
+
+d30normreg = read.table( file = "../Data/reg30dset" ,sep=';',stringsAsFactors = FALSE)
+d30normdays = read.table( file = "../Data/days30dset" ,sep=';',stringsAsFactors = FALSE)
+d30standreg = read.table(file = "../Data/reg30stand" ,sep=';',stringsAsFactors = FALSE)
+d30standdays = read.table(file = "../Data/days30stand" ,sep=';',stringsAsFactors = FALSE)
+
+d90normreg = read.table( file = "../Data/reg90dset" ,sep=';',stringsAsFactors = FALSE)
+d90normdays = read.table( file = "../Data/days90dset" ,sep=';',stringsAsFactors = FALSE)
+d90standreg = read.table(file = "../Data/reg90stand" ,sep=';',stringsAsFactors = FALSE)
+d90standdays = read.table(file = "../Data/days90stand" ,sep=';',stringsAsFactors = FALSE)
+
 ###Identifying Problem Websites: step 1 manual, rulebase identification 3 months
 
 ## wagercounts >> and balance decreases
@@ -36,28 +49,52 @@ datasets = readindata()
 #ordered_ruleset1 = ruleset1[order(ruleset1$impactfactor),]
 #subselection = rownames( ordered_ruleset1[ ordered_ruleset1$impactfactor < -0.01,] )
 #subset = Data[ Data$SystemCode %in% subselection,]
-RawData = datasets[['d7normdays']]
-relevant_Dataset = datasets[['d7normreg']]
+RawData = d7normdays
+relevant_Dataset = d7normreg
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output,session) {
   
   Datasets = reactiveValues()
   
-  observeEvent(c(input$Dataset,input$MinUsers, input$AvgUsers, input$Aggregation),{
-    Datasets <<- getDataSet(input$Dataset,input$MinUsers,input$AvgUsers, input$Aggregation,datasets)
-    updateSelectInput(session,'summary_dataset',  choices = unique((Datasets[['RawData']])$SystemCode))
-  })
-
-  observeEvent(c(input$AllCharacteristics,input$AllSites),{
-    if (input$AllCharacteristics){
-      updateSelectInput(session, 'Characteristics', selected = colnames(Datasets[['RawData']]))
+  observeEvent(c(input$Dataset,input$MinUsers, input$AvgUsers),{
+    if( input$Dataset == '7days normalized')
+    { 
+      indxs = filtermin(d7standdays, input$MinUsers, input$AvgUsers)
+      relevant_Dataset <<- d7standreg[indxs, ] 
+      RawData <<- d7standdays[d7standdays$SystemCode %in% indxs, ]
+    } else if ( input$Dataset == '7 days')
+    {
+     indxs = filtermin(d7normdays, input$MinUsers, input$AvgUsers)
+      relevant_Dataset <<- d7normreg[indxs,] 
+      RawData <<- d7normdays[ d7normdays$SystemCode %in% indxs, ]
+    } else if( input$Dataset == '30 days normalized')
+    {
+      indxs = filtermin(d30standdays, input$MinUsers, input$AvgUsers)
+      relevant_Dataset <<- d30standreg[indxs,] 
+      RawData <<- d30standdays[ d30standdays$SystemCode %in% indxs,]
+    } else if (input$Dataset == '30 days')
+    {
+      indxs = filtermin(d30normdays, input$MinUsers, input$AvgUsers)
+      relevant_Dataset <<- d30normreg[indxs,] 
+      RawData <<- d30normdays[ d30normdays$SystemCode %in% indxs,]
+    } else if( input$Dataset == '90 days normalized')
+    {
+      indxs = filtermin(d90standdays, input$MinUsers, input$AvgUsers)
+      relevant_Dataset <<- d90standreg[indxs,] 
+      RawData <<- d90standdays[ d90standdays$SystemCode %in% indxs,]
+    } else if (input$Dataset == '90 days')
+    {
+      indxs = filtermin(d90normdays, input$MinUsers, input$AvgUsers)
+      relevant_Dataset <<- d90normreg[indxs,] 
+      RawData <<- d90normdays[ d90normdays$SystemCode %in% indxs,]
     }
-    if (input$AllSites){
-      updateSelectInput(session,'summary_dataset',  selected = unique((Datasets[['RawData']])$SystemCode))
-    }
-  })
+    Datasets$relevant_Dataset = relevant_Dataset
+    Datasets$RawData          = RawData
     
+
+  })
+  
   observeEvent(c(input$CompareVariable1,input$CompareVariable2),
   {
     if (is(Operator,'Contrasts'))
@@ -65,7 +102,7 @@ shinyServer(function(input, output,session) {
     Operator <<- SetParameters(Operator, c(input$CompareVariable1,input$CompareVariable2))
     updateSliderInput(session,'variable1', label = input$CompareVariable1)
     updateSliderInput(session,'variable2', label = input$CompareVariable2)
-    updateSelectInput(session, 'Characteristics', choices = colnames(Datasets[['RawData']]), 
+    updateSelectInput(session, 'Characteristics', choices = colnames(RawData), 
                       selected = c(input$CompareVariable1,input$CompareVariable2))
     }
  })
@@ -73,7 +110,7 @@ shinyServer(function(input, output,session) {
   observeEvent(c(input$Contrast,Datasets),{
     Operator <<- new(input$Contrast)
     updateSelectInput(session,'CompareVariable1', choices = colnames(getSelection(Operator)))
-    updateSelectInput(session,'CompareVariable2', choices = c('None', colnames(getSelection(Operator))))
+    updateSelectInput(session,'CompareVariable2', choices = c('None', colnames(getSelection(Operator))))    
     pars = getParameterName(Operator)
     basis = getSelectedCharacteristics(Operator)
     ##Can be moved into the class
@@ -86,9 +123,12 @@ shinyServer(function(input, output,session) {
     )
     
     
-
+    filterout = function(ip){
+      return(ip[!(ip %in% c('SystemCode','DATE','sequence')) ])
+    }
     
-    observeEvent(input$updateButton,{
+    
+    observeEvent(c(Datasets,input$Characteristics),{
       ###Create 3D PCA representation
       if (input$overlays ==3)
       {
@@ -142,7 +182,7 @@ shinyServer(function(input, output,session) {
       }
     })
     
-    observeEvent(input$updateButton,
+    observeEvent(c(input$Dataset,input$Characteristics, input$topn),
                   {
                     if (input$overlays == 2){
                       filt_chars = filterout(input$Characteristics)
@@ -154,19 +194,11 @@ shinyServer(function(input, output,session) {
                       if(sum(cols_ds) < 2) { return()}
                       if ((dim(selected_MT)[1] > 1) && (dim(selected_MT)[2] > 1))
                         {
-                        x = rrcov::CovMve(selected_MT)
-                        
-                        top_n_rows = (rownames(selected_MT)[ order(x@raw.mah, decreasing =TRUE) ])[1:input$topn]
-                        print("Top n rows:")
-                        print(top_n_rows)
-                        print("CenterValues:")
-                        std = atan(rbind(x@raw.center, selected_MT[top_n_rows,]))
-                        #print(std)
-                        #print(sweep(t(std),1,apply(std,2,function(x) max(abs(x))),'/'))
-                        std = t(t(std) / apply(std,2,function(x) max(abs(x))))
+                        x = robustbase::covMcd(selected_MT)
+                        top_n_rows = (rownames(selected_MT)[ order(x$mah, decreasing =TRUE) ])[1:input$topn]
                         output$comparisonList =
                         renderPlot({
-                          matplot(t(std),type='l', xlab = 'Category', ylab ='evolution',
+                          matplot(t(rbind(atan(x$center),atan(selected_MT[top_n_rows,]))),type='l', xlab = 'Category', ylab ='evolution',
                                 axes =F, col = c(1:(input$topn +1)))
                         legend("bottomright", inset=.05, legend=c('mean', top_n_rows), pch=1, horiz=FALSE,
                                col = c(1:(input$topn+1)))
@@ -202,10 +234,10 @@ shinyServer(function(input, output,session) {
                                             '~sequence + SystemCode, data = tmporset)',sep='')))
                             output[[plotname]] <- renderPlot({
                               matplot(Datainput,
-                                      main = rowlov, type='l', col = c(2:(length(top_n_rows)+1))
+                                      main = rowlov, type='l'
                               )
                               legend("bottomright", inset=.05, legend=top_n_rows, pch=1, horiz=FALSE,
-                                     col = c(2:(length(top_n_rows)+1)))
+                                     col = c(1:length(top_n_rows)))
                               
                             })
                           })
@@ -223,7 +255,7 @@ shinyServer(function(input, output,session) {
                   })
     
     
-    observeEvent(input$updateButton,
+    observeEvent(c(input$variable1,input$variable2, Datasets),
                  {
                    relevant_Dataset =  Datasets$relevant_Dataset
                    RawData =  Datasets$RawData
@@ -236,10 +268,6 @@ shinyServer(function(input, output,session) {
                    Websites = getSites(Operator)
                    filtered = getFiltered(Operator,  RawData)
 
-                   #print(Websites)
-                   #print(head(filtered))
-                   #print(head(selected))
-                   
                   updateSelectInput(session, 'detailsWebsite', choices = Websites, selected=
                                        selected$SystemCode[1])
                    observeEvent(c(input$detailsWebsite,input$Characteristics),
@@ -277,13 +305,6 @@ shinyServer(function(input, output,session) {
 
     
                  })
-  })
-  
-  observeEvent(input$updateButton,{
-    if (input$overlays == 4)
-    {
-      print("APPEL, PEER EN ANDERE ZEVER")
-    }
   })
   
 })

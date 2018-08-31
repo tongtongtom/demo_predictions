@@ -29,6 +29,8 @@ shinyUI(fluidPage(
                   choices = list('7days normalized','7 days','30 days normalized','30 days',
                                  '90 days normalized','90 days'),
                   selected = '7 days'),
+      selectInput(inputId = 'Aggregation', multiple=FALSE, label='aggregation method',
+                  choices = list('regression','min','max','median','mean','sd'), selected ='regression'),
       sliderInput(inputId = 'MinUsers', label = 'Minimum User', min = 0, max = 50000, value  = 50, step = 1),
       sliderInput(inputId = 'AvgUsers', label = 'Average User', min = 0, max = 50000, value  = 0, step = 1),
       conditionalPanel(condition="input.Contrast.match('Contrast') && input.overlays==1",
@@ -55,7 +57,13 @@ shinyUI(fluidPage(
         sliderInput(inputId = "topn",label='top_n', min=1, max = 10, value=5, step= 1)),
       conditionalPanel(condition="input.overlays==3", 
         sliderInput(inputId='pcascale',label='Confidence',min=-150, max = -1, value=-4, step=-1)
-        )
+        ),
+      conditionalPanel(condition='input.overlays==4',
+        selectInput(inputId="summary_dataset",label="Website", choices = list(), selected = FALSE, multiple = FALSE),
+        actionButton(inputId = 'AllSites', label= 'All Websites' ),
+        actionButton(inputId = 'AllCharacteristics', label= 'All Characteristics' )
+       ),
+        actionButton(inputId='updateButton', label='update')
     ),
     # Show a plot of the generated distribution
     mainPanel(
@@ -75,9 +83,12 @@ shinyUI(fluidPage(
                   
                   tabPanel("Robust PCA perspective:",
                            rglwidgetOutput ('PCA_plot'),
-                           rglwidgetOutput ("myWebGL"),
                            DT::dataTableOutput('PCA_summary'),
-                           value = 3)
+                           value = 3), 
+                  tabPanel("Visualization Data:",
+                           DT::dataTableOutput("AggregatesTable"),
+                           plotOutput(""),
+                           value = 4)
     )
   )
   )
