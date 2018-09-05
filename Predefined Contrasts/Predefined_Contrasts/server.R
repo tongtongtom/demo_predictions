@@ -282,7 +282,7 @@ shinyServer(function(input, output,session) {
   observeEvent(input$updateButton,{
     if (input$overlays == 4)
     {
-      print("APPEL, PEER EN ANDERE ZEVER")
+      
     }
   })
   
