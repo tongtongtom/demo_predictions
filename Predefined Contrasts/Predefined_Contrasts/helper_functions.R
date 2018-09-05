@@ -54,7 +54,7 @@ estimate_probability = function(target)
   k=3
   resultaat = 0
   x = 3.01 ##needs to be bigger than 3 for approximation to be valid
-  while( resultaat >¡@target)
+  while( resultaat > target)
   {
     x = x*1.01 
     resultaat = 3/2 * log((x/k * exp(1 - (x/k))))
