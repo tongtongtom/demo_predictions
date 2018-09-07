@@ -22,13 +22,16 @@ shinyUI(fluidPage(
                   selected = '7 days'),
       sliderInput(inputId = 'MinUsers', label = 'Minimum User', min = 0, max = 50000, value  = 50, step = 1),
       sliderInput(inputId = 'AvgUsers', label = 'Average User', min = 0, max = 50000, value  = 0, step = 1),
+      conditionalPanel(condition='input.overlays==1 | input.overlays==3',
       selectInput(inputId = "Characteristics", multiple=TRUE, label="Characteristics:", choices = list()),
-      selectInput(inputId = "detailsWebsite", multiple=TRUE, label ="Details Website",  choices = list()),
+      selectInput(inputId = "detailsWebsite", multiple=TRUE, label ="Details Website",  choices = list())),
       
       actionButton(inputId = 'AllSites', label= 'All Websites' ),
       actionButton(inputId = 'AllCharacteristics', label= 'All Characteristics' ),
-      actionButton(inputId = "updateValues", label='update')
-      
+      actionButton(inputId = "updateValues", label='update'),
+      conditionalPanel(condition='input.overlays==2',
+      selectInput(inputId = 'Char1', label='Characteristic 1',choices=list()),                 
+      selectInput(inputId = 'Char2', label='Characteristic 2',choices=list()))
     ),
     mainPanel(
       tabsetPanel(id='overlays',
@@ -39,7 +42,11 @@ shinyUI(fluidPage(
                  value = 1
                  ),
         tabPanel("Pairwise Correlations",
+                 DT::dataTableOutput("PairwiseCorrelationTable"),
+                 plotOutput("CorrelationTableau",width='1200px',height='1500px'),
                  value=2),
+        tabPanel("Anti-Correlated Websites",
+                 value=4),
         tabPanel("Distance in selected Correlations",
                  DT::dataTableOutput("ComparisonTable"),
                  value=3)

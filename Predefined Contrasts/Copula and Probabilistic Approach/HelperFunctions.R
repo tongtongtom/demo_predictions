@@ -3,6 +3,22 @@ filterout = function(ip){
   return(ip[!(ip %in% c('SystemCode','DATE','sequence')) ])
 }
 
+get_n = function(number_of_sets)
+{
+  x = 1
+  y = 1
+  while( (x*y) < number_of_sets)
+  {
+    if (x<= y){ x = x + 1}
+    else {y = y + 1}
+  }
+  print(x)
+  print(y)
+  return(c(x,y))
+}
+
+
+
 readindata = function()
 {
   datasets = list()
