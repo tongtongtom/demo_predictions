@@ -57,27 +57,31 @@ shinyServer(function(input, output, session) {
      if(input$overlays==2)
      {
        datasets = Datasets[['RawData']]
-       
+       print(head(datasets))
        counter = 1
        number_of_sets = length(unique(datasets$SystemCode))
        dat = get_n(number_of_sets)
        print(dat)
        
-       pair_corr = cor(datasets[,c(input$Char1,input$Char2)])[2,1]
-       basisset = c('gen',pair_corr)
+       pair_corr   = cor(datasets[,c(input$Char1,input$Char2)])[2,1]
+       corr_first  = cor(datasets[,c(input$Char1,'sequence')])[2,1]
+       corr_second = cor(datasets[,c('sequence',input$Char2)])[2,1]
+       basisset = c('gen',pair_corr, corr_first, corr_second)
        
-       for (sequence in unique(data$SystemCode))
+       for (sequence in unique(datasets$SystemCode))
        {
-         zm = cor(datasets[data$SystemCode == sequence,c(input$Char1,input$Char2)])[2,1]
-         basisset = rbind(basisset,c(sequence,zm))
+         zm = cor(datasets[datasets$SystemCode == sequence,c(input$Char1,input$Char2)])[2,1]
+         first_with_sequence = cor(datasets[datasets$SystemCode == sequence,c(input$Char1,'sequence')])[2,1]
+         second_with_sequence = cor(datasets[datasets$SystemCode == sequence,c('sequence',input$Char2)])[2,1]
+         basisset = rbind(basisset,c(sequence,zm,first_with_sequence,second_with_sequence))
        }
        basisset[is.na(basisset)] = 0.0
-       colnames(basisset) = c("Website",'Correlation')
+       colnames(basisset) = c("Website",'Correlation','first_vs_sequence','second_vs_sequence')
        output$PairwiseCorrelationTable = DT::renderDataTable({basisset})
        
+       tegenstroom = datasets[,c(input$Char1,input$Char2,'SystemCode','sequence')]
        
        output$CorrelationTableau = renderPlot({
-         tegenstroom = datasets[,c(input$Char1,input$Char2,'SystemCode','sequence')]
          par(mfrow=c(dat[1],dat[2]))
          par(mar=c(1,1,1,1))
        
@@ -86,16 +90,53 @@ shinyServer(function(input, output, session) {
           tempdat = tegenstroom[ tegenstroom$SystemCode == id, ]
           tmpval = cor(tempdat[,c(input$Char1,input$Char2)])[1,2]
           tmpval[is.na(tmpval)] = 0
-          if(abs( tmpval - pair_corr) > 1){
+          if(abs( tmpval - pair_corr) > 0.8){
             plot(tempdat[,c(input$Char1,input$Char2)],col='yellow')
-            points(lowess(tempdat[,c(1:2)]),type='l',col='red')
+            points(lowess(tempdat[,c(1,2)]),type='l',col='red')
          } else {
             plot(tempdat[,c(input$Char1,input$Char2)],col='green')
-            points(lowess(tempdat[,c(1:2)]),type='l',col='black')
+            points(lowess(tempdat[,c(1,2)]),type='l',col='black')
          }
        }
        
        })
+       
+       output$CorrelationFirstTime = renderPlot({
+         par(mfrow=c(dat[1],dat[2]))
+         par(mar=c(1,1,1,1))
+         for (id in unique(tegenstroom$SystemCode))
+         {
+           tempdat = tegenstroom[ tegenstroom$SystemCode == id, ]
+           tmpval = cor(tempdat[,c(input$Char1,'sequence')])[1,2]
+           tmpval[is.na(tmpval)] = 0
+           if(abs( tmpval - corr_first) > 0.8){
+             plot(tempdat[,c(input$Char1,'sequence')],col='yellow')
+             points(lowess(tempdat[,c(1,4)]),type='l',col='red')
+           } else {
+             plot(tempdat[,c(input$Char1,'sequence')],col='green')
+             points(lowess(tempdat[,c(1,4)]),type='l',col='black')
+           }
+         }
+       })
+       
+       output$CorrelationSecondTime = renderPlot({
+         par(mfrow=c(dat[1],dat[2]))
+         par(mar=c(1,1,1,1))
+         for (id in unique(tegenstroom$SystemCode))
+         {
+           tempdat = tegenstroom[ tegenstroom$SystemCode == id, ]
+           tmpval = cor(tempdat[,c('sequence',input$Char2)])[1,2]
+           tmpval[is.na(tmpval)] = 0
+           if(abs( tmpval - corr_first) > 0.8){
+             plot(tempdat[,c('sequence',input$Char2)],col='yellow')
+             points(lowess(tempdat[,c(4,2)]),type='l',col='red')
+           } else {
+             plot(tempdat[,c('sequence',input$Char2)],col='green')
+             points(lowess(tempdat[,c(4,2)]),type='l',col='black')
+           }
+         }
+       })
+       
      }
    })
    
@@ -127,7 +168,6 @@ shinyServer(function(input, output, session) {
              tpval2 = cor(datasets[datasets$SystemCode == summer,c(sel1,sel2)])[2,1]
              xmm = rbind(xmm,c(sel1,sel2,tpval2))
            }
-           print(head(xmm))
          }
        }
      }
